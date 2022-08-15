@@ -1,4 +1,5 @@
 import { customAlphabet, nanoid } from 'nanoid';
+import { send } from 'process';
 import { BoundingBox, ServerConversationArea } from '../client/TownsServiceClient';
 import { ChatMessage, PlayerStatus, UserLocation } from '../CoveyTypes';
 import CoveyTownListener from '../types/CoveyTownListener';
@@ -292,7 +293,10 @@ export default class CoveyTownController {
     const sender = this._listeners[senderIdx];
     const receiver = this._listeners[receiverIdx];
     const receiverBusyMessage = 'System: sorry, you cannot send message to a busy person.';
-
+    if(message.author.id === message.receiver.id){
+      sender.onChatMessage(message);
+      return;
+    }
     if (!record) {
       this._messageRecords.set(keyAtoB, message.dateCreated);
       if (this.isPlayerStatusBusy(message.receiver.id)) {
