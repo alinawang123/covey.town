@@ -264,6 +264,14 @@ export default class CoveyTownController {
     this._listeners = this._listeners.filter(v => v !== listener);
   }
 
+  /**
+   * Send direct message from one player to another.
+   * 
+   * Cannot send direct message if receiver status is busy,
+   * and cannot send more than one message in 30s if the receiver did not reply
+   * 
+   * @param message the message that the sender sends to the receiver
+   */
   onChatMessage(message: ChatMessage): void {
     // for(let i=0;i<this._listeners.length;i++){
     //   message.body=this._players[i].userName
