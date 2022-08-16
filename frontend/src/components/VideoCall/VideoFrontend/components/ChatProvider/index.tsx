@@ -8,7 +8,11 @@ type ChatContextType = {
   hasUnreadMessages: boolean;
   messages: ChatMessage[];
   conversation: TextConversation | null;
+  open:boolean;
+  setOpen:(open:boolean)=>void;
+  errorMsg:string
 };
+
 
 export const ChatContext = createContext<ChatContextType>(null!);
 
@@ -19,11 +23,20 @@ export const ChatProvider: React.FC = ({ children }) => {
   const [conversation, setConversation] = useState<TextConversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [errorMsg,setMsg] = useState("");
 
   useEffect(() => {
     if (conversation) {
-      const handleMessageAdded = (message: ChatMessage) =>
-        setMessages(oldMessages => [...oldMessages, message]);
+      const handleMessageAdded = (message: ChatMessage) =>{
+        if(message.errorMsg){
+          setMsg(message.errorMsg)
+          setOpen(true)
+        }else{
+          setMessages(oldMessages => [...oldMessages, message]);
+        }
+      }
+        
       //TODO - store entire message queue on server?
       // conversation.getMessages().then(newMessages => setMessages(newMessages.items));
       conversation.onMessageAdded(handleMessageAdded);
@@ -63,6 +76,9 @@ export const ChatProvider: React.FC = ({ children }) => {
         hasUnreadMessages,
         messages,
         conversation,
+        open,
+        setOpen,
+        errorMsg
       }}>
       {children}
     </ChatContext.Provider>
