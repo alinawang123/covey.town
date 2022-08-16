@@ -6,6 +6,7 @@ import TextConversation from '../../../../../../classes/TextConversation';
 import { UserProfile } from '../../../../../../CoveyTypes';
 import useMaybeVideo from '../../../../../../hooks/useMaybeVideo';
 import usePlayersInTown from '../../../../../../hooks/usePlayersInTown';
+import useVideoContext from '../../../hooks/useVideoContext/useVideoContext';
 import { isMobile } from '../../../utils';
 import Snackbar from '../../Snackbar/Snackbar';
 // import Select, { SelectChangeEvent } from '@material-ui/core/Select';
@@ -80,6 +81,9 @@ export default function ChatInput({ conversation, isChatWindowOpen }: ChatInputP
   const [isTextareaFocused, setIsTextareaFocused] = useState(false);
   const video = useMaybeVideo()
   const [selectedUser, setUser] = React.useState<string>('everyone');
+  const { room } = useVideoContext();
+  const localParticipant = room!.localParticipant;
+  
   const handleChange1 = (event: React.ChangeEvent<{ value: unknown }>) => {
     console.log("12")
     setUser(event.target.value as string);
@@ -155,7 +159,9 @@ export default function ChatInput({ conversation, isChatWindowOpen }: ChatInputP
     onChange={handleChange1}
   >
     <MenuItem value="everyone" >everyone</MenuItem>
-    {players.map((player)=>{
+    {players.filter(player=>{
+      return player.id!=localParticipant.identity
+    }).map((player)=>{
       return <MenuItem value={player.id} key={player.id}>{player.displayName}</MenuItem>
     })}
     {/* <MenuItem value={10}>Ten</MenuItem>

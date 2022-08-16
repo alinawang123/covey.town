@@ -16,6 +16,7 @@ export type ChatMessage = {
   sid: string;
   body: string;
   dateCreated: Date;
-  receiver?:UserProfile
+  receiver?:UserProfile;
+  errorMsg?:string
 };
 export type PlayerStatus = 'free' | 'busy';
