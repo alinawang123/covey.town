@@ -1,4 +1,4 @@
-import { FormControl, InputLabel, makeStyles, MenuItem, Select } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 import clsx from 'clsx';
 import { default as React, useEffect, useRef, useState } from 'react';
@@ -9,6 +9,7 @@ import usePlayersInTown from '../../../../../../hooks/usePlayersInTown';
 import useVideoContext from '../../../hooks/useVideoContext/useVideoContext';
 import { isMobile } from '../../../utils';
 import Snackbar from '../../Snackbar/Snackbar';
+import UserSelect from './UserSelect/UserSelect';
 // import Select, { SelectChangeEvent } from '@material-ui/core/Select';
 
 const useStyles = makeStyles(theme => ({
@@ -85,7 +86,6 @@ export default function ChatInput({ conversation, isChatWindowOpen }: ChatInputP
   const localParticipant = room!.localParticipant;
   
   const handleChange1 = (event: React.ChangeEvent<{ value: unknown }>) => {
-    console.log("12")
     setUser(event.target.value as string);
   };
   const players:UserProfile[]=usePlayersInTown().map((item)=>{
@@ -149,26 +149,24 @@ export default function ChatInput({ conversation, isChatWindowOpen }: ChatInputP
         handleClose={() => setFileSendError(null)}
       />
       <div>
-      <FormControl fullWidth>
-  <InputLabel id="demo-simple-select-label">To:</InputLabel>
-  <Select
-    labelId="demo-simple-select-label"
-    id="demo-simple-select"
-    value={selectedUser}
-    label="Age"
-    onChange={handleChange1}
-  >
-    <MenuItem value="everyone" >everyone</MenuItem>
-    {players.filter(player=>{
-      return player.id!=localParticipant.identity
-    }).map((player)=>{
-      return <MenuItem value={player.id} key={player.id}>{player.displayName}</MenuItem>
-    })}
-    {/* <MenuItem value={10}>Ten</MenuItem>
-    <MenuItem value={20}>Twenty</MenuItem>
-    <MenuItem value={30}>Thirty</MenuItem> */}
-  </Select>
-</FormControl>
+      {/* <FormControl fullWidth>
+        <InputLabel id="demo-simple-select-label">To:</InputLabel>
+        <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          value={selectedUser}
+          label="Age"
+          onChange={handleChange1}
+        >
+          <MenuItem value="everyone" >everyone</MenuItem>
+          {players.filter(player=>{
+            return player.id!=localParticipant.identity
+          }).map((player)=>{
+            return <MenuItem value={player.id} key={player.id}>{player.displayName}</MenuItem>
+          })}
+        </Select>
+      </FormControl> */}
+      <UserSelect selectedUser={selectedUser} handleChange={handleChange1}/>
       </div>
       <div className={clsx(classes.textAreaContainer, { [classes.isTextareaFocused]: isTextareaFocused })}>
         {/* 
