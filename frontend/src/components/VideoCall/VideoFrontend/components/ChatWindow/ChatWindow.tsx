@@ -62,8 +62,8 @@ export default function ChatWindow() {
         Open success snackbar
       </Button> */}
       <Stack sx={{ width: '100%' }} spacing={2}>
-        <Snackbar open={open} autoHideDuration={2000} >
-          <Alert  severity="error" sx={{ width: '100%' }} >
+        <Snackbar open={open} autoHideDuration={2000} onClose={handleClose}>
+          <Alert  severity="error" sx={{ width: '100%' }} onClose={handleClose}>
             {errorMsg}
           </Alert>
         </Snackbar>
