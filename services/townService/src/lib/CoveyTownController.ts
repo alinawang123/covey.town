@@ -300,33 +300,33 @@ export default class CoveyTownController {
     const sender = this._listeners[senderIdx];
     const receiver = this._listeners[receiverIdx];
     const receiverBusyMessage = 'Sorry, you cannot send message to a busy person.';
-    if(this.isPlayerStatusBusy(message.receiver.id)){
+    if (this.isPlayerStatusBusy(message.receiver.id)){
       message.errorMsg = receiverBusyMessage;
       sender.onChatMessage(message);
-      return
+      return;
     }
-    if(message.author.id === message.receiver.id){
+    if (message.author.id === message.receiver.id){
       sender.onChatMessage(message);
       return;
     }
     if (!record) {
       this._messageRecords.set(keyAtoB, message.dateCreated);
-        sender.onChatMessage(message);
-        receiver.onChatMessage(message);
+      sender.onChatMessage(message);
+      receiver.onChatMessage(message);
     } else if (typeof(record) === 'boolean'){
       if (record) {
-          sender.onChatMessage(message);
-          receiver.onChatMessage(message);
+        sender.onChatMessage(message);
+        receiver.onChatMessage(message);
       }
     } else {
       const diff = new Date(message.dateCreated).getTime() - new Date(record).getTime();
       if (diff < 60 * 60 * 1000) {
-        message.errorMsg = `Before this player replies to you, you cannot send message again within ${Math.round(60-diff/60/1000)} minutes`;
+        message.errorMsg = `Before this player replies to you, you cannot send message again within ${Math.round(60 - diff / 60 / 1000)} minutes`;
         sender.onChatMessage(message);
       } else {
         this._messageRecords.set(keyAtoB, message.dateCreated);
-          sender.onChatMessage(message);
-          receiver.onChatMessage(message);
+        sender.onChatMessage(message);
+        receiver.onChatMessage(message);
       }
     }
   }
