@@ -1,10 +1,10 @@
 import React from 'react';
 import { ChatMessage } from '../../../../../../classes/TextConversation';
+import usePlayersInTown from '../../../../../../hooks/usePlayersInTown';
+import useVideoContext from '../../../hooks/useVideoContext/useVideoContext';
 import MessageInfo from './MessageInfo/MessageInfo';
 import MessageListScrollContainer from './MessageListScrollContainer/MessageListScrollContainer';
 import TextMessage from './TextMessage/TextMessage';
-import useVideoContext from '../../../hooks/useVideoContext/useVideoContext';
-import usePlayersInTown from '../../../../../../hooks/usePlayersInTown';
 
 interface MessageListProps {
   messages: ChatMessage[];
@@ -28,14 +28,14 @@ export default function MessageList({ messages }: MessageListProps) {
         // Display the MessageInfo component when the author or formatted timestamp differs from the previous message
         const shouldDisplayMessageInfo = time !== previousTime || message.author !== messages[idx - 1]?.author;
 
-        const isLocalParticipant = localParticipant.identity === message.author;
+        const isLocalParticipant = localParticipant.identity === message.author.id;
 
-        const profile = players.find(p => p.id == message.author);
+        const profile = players.find(p => p.id == message.author.id);
 
         return (
           <React.Fragment key={message.sid}>
             {shouldDisplayMessageInfo && (
-              <MessageInfo author={profile?.userName || message.author} isLocalParticipant={isLocalParticipant} dateCreated={time} />
+              <MessageInfo author={message.author.displayName} isLocalParticipant={isLocalParticipant} dateCreated={time} receiver={message.receiver}/>
             )}
             <TextMessage body={message.body} isLocalParticipant={isLocalParticipant} />
           </React.Fragment>

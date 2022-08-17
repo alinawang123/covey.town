@@ -1,6 +1,6 @@
 import { customAlphabet, nanoid } from 'nanoid';
 import { BoundingBox, ServerConversationArea } from '../client/TownsServiceClient';
-import { ChatMessage, UserLocation } from '../CoveyTypes';
+import { ChatMessage, PlayerStatus, UserLocation } from '../CoveyTypes';
 import CoveyTownListener from '../types/CoveyTownListener';
 import Player from '../types/Player';
 import PlayerSession from '../types/PlayerSession';
@@ -54,6 +54,10 @@ export default class CoveyTownController {
     return this._conversationAreas;
   }
 
+  get messageRecords():Map<string, Date | boolean>{
+    return this._messageRecords;
+  }
+
   /** The list of players currently in the town * */
   private _players: Player[] = [];
 
@@ -79,12 +83,15 @@ export default class CoveyTownController {
 
   private _capacity: number;
 
+  private _messageRecords: Map<string, Date | boolean>;
+
   constructor(friendlyName: string, isPubliclyListed: boolean) {
     this._coveyTownID = process.env.DEMO_TOWN_ID === friendlyName ? friendlyName : friendlyNanoID();
     this._capacity = 50;
     this._townUpdatePassword = nanoid(24);
     this._isPubliclyListed = isPubliclyListed;
     this._friendlyName = friendlyName;
+    this._messageRecords = new Map<string, Date | boolean>();
   }
 
   /**
@@ -128,11 +135,11 @@ export default class CoveyTownController {
 
   /**
    * Updates the location of a player within the town
-   * 
+   *
    * If the player has changed conversation areas, this method also updates the
    * corresponding ConversationArea objects tracked by the town controller, and dispatches
    * any onConversationUpdated events as appropriate
-   * 
+   *
    * @param player Player to update location for
    * @param location New location for this player
    */
@@ -157,11 +164,22 @@ export default class CoveyTownController {
   }
 
   /**
-   * Removes a player from a conversation area, updating the conversation area's occupants list, 
+   * Updates the status of a player within the town
+   *
+   * @param player Player to update location for
+   * @param playerStatus New status for this player
+   */
+  updatePlayerStatus(player: Player, playerStatus: PlayerStatus): void {
+    player.status = playerStatus;
+    this._listeners.forEach(listener => listener.onPlayerStatusChanged(player));
+  }
+
+  /**
+   * Removes a player from a conversation area, updating the conversation area's occupants list,
    * and emitting the appropriate message (area updated or area destroyed)
-   * 
+   *
    * Does not update the player's activeConversationArea property.
-   * 
+   *
    * @param player Player to remove from conversation area
    * @param conversation Conversation area to remove player from
    */
@@ -196,7 +214,7 @@ export default class CoveyTownController {
     if (_conversationArea.topic === ''){
       return false;
     }
-    if (this._conversationAreas.find(eachExistingConversation => 
+    if (this._conversationAreas.find(eachExistingConversation =>
       CoveyTownController.boxesOverlap(eachExistingConversation.boundingBox, _conversationArea.boundingBox)) !== undefined){
       return false;
     }
@@ -211,9 +229,9 @@ export default class CoveyTownController {
 
   /**
    * Detects whether two bounding boxes overlap and share any points
-   * 
-   * @param box1 
-   * @param box2 
+   *
+   * @param box1
+   * @param box2
    * @returns true if the boxes overlap, otherwise false
    */
   static boxesOverlap(box1: BoundingBox, box2: BoundingBox):boolean{
@@ -245,8 +263,72 @@ export default class CoveyTownController {
     this._listeners = this._listeners.filter(v => v !== listener);
   }
 
+  /**
+   * Send direct message from one player to another.
+   * 
+   * Cannot send direct message if receiver status is busy,
+   * and cannot send more than one message in 30s if the receiver did not reply
+   * 
+   * @param message the message that the sender sends to the receiver
+   */
   onChatMessage(message: ChatMessage): void {
-    this._listeners.forEach(listener => listener.onChatMessage(message));
+    // for(let i=0;i<this._listeners.length;i++){
+    //   message.body=this._players[i].userName
+    //   this._listeners[i].onChatMessage(message)
+    // }
+    // this._listeners.forEach(listener => listener.onChatMessage(message));
+    // console.log(new Date(message.dateCreated).getTime())
+
+    if (!message.receiver){
+      this._listeners.forEach(listener => listener.onChatMessage(message));
+      return;
+    }
+    // console.log(message.body)
+    const keyAtoB = `${message.author.id  }:${  message.receiver.id}`;
+    const keyBtoA = `${message.receiver.id  }:${  message.author.id}`;
+    this._messageRecords.set(keyBtoA, true);
+    const record = this._messageRecords.get(keyAtoB);
+    // console.log(record)
+    const receiverIdx = this.players.findIndex((player)=>player.id === message.receiver?.id);
+    const senderIdx = this.players.findIndex((player)=>player.id === message.author.id);
+    // console.log("senderIdx",senderIdx)
+    // console.log("recIdx",receiverIdx)
+    if (senderIdx < 0 || receiverIdx < 0){
+      return;
+    }
+
+    const sender = this._listeners[senderIdx];
+    const receiver = this._listeners[receiverIdx];
+    const receiverBusyMessage = 'Sorry, you cannot send message to a busy person.';
+    if(this.isPlayerStatusBusy(message.receiver.id)){
+      message.errorMsg = receiverBusyMessage;
+      sender.onChatMessage(message);
+      return
+    }
+    if(message.author.id === message.receiver.id){
+      sender.onChatMessage(message);
+      return;
+    }
+    if (!record) {
+      this._messageRecords.set(keyAtoB, message.dateCreated);
+        sender.onChatMessage(message);
+        receiver.onChatMessage(message);
+    } else if (typeof(record) === 'boolean'){
+      if (record) {
+          sender.onChatMessage(message);
+          receiver.onChatMessage(message);
+      }
+    } else {
+      const diff = new Date(message.dateCreated).getTime() - new Date(record).getTime();
+      if (diff < 60 * 60 * 1000) {
+        message.errorMsg = `Before this player replies to you, you cannot send message again within ${Math.round(60-diff/60/1000)} minutes`;
+        sender.onChatMessage(message);
+      } else {
+        this._messageRecords.set(keyAtoB, message.dateCreated);
+          sender.onChatMessage(message);
+          receiver.onChatMessage(message);
+      }
+    }
   }
 
   /**
@@ -261,6 +343,19 @@ export default class CoveyTownController {
 
   disconnectAllPlayers(): void {
     this._listeners.forEach(listener => listener.onTownDestroyed());
+  }
+
+  /**
+   * Find if player status is busy.
+   *
+   * @param playerId player id
+   */
+  private isPlayerStatusBusy(playerId: string): boolean {
+    const player = this.players.find(({ id }) => id === playerId);
+    if (player) {
+      return player.status === 'busy';
+    }
+    return false;
   }
 
 }

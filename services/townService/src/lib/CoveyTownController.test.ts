@@ -9,6 +9,7 @@ import { UserLocation } from '../CoveyTypes';
 import PlayerSession from '../types/PlayerSession';
 import { townSubscriptionHandler } from '../requestHandlers/CoveyTownRequestHandlers';
 import CoveyTownsStore from './CoveyTownsStore';
+import { ChatMessage, PlayerStatus, UserProfile } from '../CoveyTypes';
 import * as TestUtils from '../client/TestUtils';
 
 const mockTwilioVideo = mockDeep<TwilioVideo>();
@@ -288,5 +289,143 @@ describe('CoveyTownController', () => {
       testingTown.updatePlayerLocation(player, newLocation);
       expect(mockListener.onConversationAreaUpdated).toHaveBeenCalledTimes(1);
     });
+  });
+  describe('onChatMessage', () => {
+    let testingTown: CoveyTownController;
+    
+    beforeEach(() => {
+      const townName = `onChatMessage test town ${nanoid()}`;
+      testingTown = new CoveyTownController(townName, false);
+    });
+    it('should be able to send direct message from the sender to the receiver', async () =>{
+      const mockListeners = [mock<CoveyTownListener>(),
+        mock<CoveyTownListener>(),
+        mock<CoveyTownListener>()];
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+
+      const player1 = new Player(nanoid());
+      const player2 = new Player(nanoid());
+      const player3 = new Player(nanoid());
+      await testingTown.addPlayer(player1);
+      await testingTown.addPlayer(player2);
+      await testingTown.addPlayer(player3);
+
+      const msgId = nanoid();
+      const date = new Date();
+      const message: ChatMessage = {
+        author: {displayName:player1.userName, id:player1.id},
+        sid: msgId,
+        body: 'hello',
+        dateCreated: date,
+        receiver: {displayName:player2.userName, id:player2.id},
+      };
+      testingTown.onChatMessage(message);
+      expect(mockListeners[0].onChatMessage).toBeCalled();
+      expect(mockListeners[1].onChatMessage).toBeCalled();
+      expect(mockListeners[2].onChatMessage).not.toBeCalled();
+    });
+
+    it('should not send direct message if the receiver did not reply the first message within 30s', async () => {
+      const mockListeners = [mock<CoveyTownListener>(),
+        mock<CoveyTownListener>(),
+        mock<CoveyTownListener>()];
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+
+      const player1 = new Player(nanoid());
+      const player2 = new Player(nanoid());
+      await testingTown.addPlayer(player1);
+      await testingTown.addPlayer(player2);
+
+      const msgId = nanoid();
+      const date = new Date();
+      const message1: ChatMessage = {
+        author: {displayName:player1.userName, id:player1.id},
+        sid: msgId,
+        body: 'hello',
+        dateCreated: date,
+        receiver: {displayName:player2.userName, id:player2.id},
+      };
+      testingTown.onChatMessage(message1);
+
+      const message2: ChatMessage = {
+        author: {displayName:player1.userName, id:player1.id},
+        sid: msgId,
+        body: 'hello',
+        dateCreated: date,
+        receiver: {displayName:player2.userName, id:player2.id},
+      };
+      testingTown.onChatMessage(message2);
+      expect(mockListeners[0].onChatMessage).toHaveBeenCalledTimes(2);
+      expect(mockListeners[1].onChatMessage).toHaveBeenCalledTimes(1);
+    });
+    it('should be able to send direct message if the receiver reply the first message', async () => {
+      const mockListeners = [mock<CoveyTownListener>(),
+        mock<CoveyTownListener>(),
+        mock<CoveyTownListener>()];
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+
+      const player1 = new Player(nanoid());
+      const player2 = new Player(nanoid());
+      await testingTown.addPlayer(player1);
+      await testingTown.addPlayer(player2);
+
+      const msgId = nanoid();
+      const date1 = new Date();
+      const message1: ChatMessage = {
+        author: {displayName:player1.userName, id:player1.id},
+        sid: msgId,
+        body: 'hello',
+        dateCreated: date1,
+        receiver: {displayName:player2.userName, id:player2.id},
+      };
+      testingTown.onChatMessage(message1);
+      const date2 = new Date();
+      const message2: ChatMessage = {
+        author: {displayName:player2.userName, id:player2.id},
+        sid: msgId,
+        body: 'hello',
+        dateCreated: date2,
+        receiver: {displayName:player1.userName, id:player1.id},
+      };
+      testingTown.onChatMessage(message2);
+      const date3 = new Date();
+      const message3: ChatMessage = {
+        author: {displayName:player1.userName, id:player1.id},
+        sid: msgId,
+        body: 'hello',
+        dateCreated: date3,
+        receiver: {displayName:player2.userName, id:player2.id},
+      };
+      testingTown.onChatMessage(message3);
+      expect(mockListeners[0].onChatMessage).toHaveBeenCalledTimes(3);
+      expect(mockListeners[1].onChatMessage).toHaveBeenCalledTimes(3);
+    });
+    it('should not send direct meassge if the receiver set his/her status as busy', async() => {
+      const mockListeners = [mock<CoveyTownListener>(),
+        mock<CoveyTownListener>(),
+        mock<CoveyTownListener>()];
+      mockListeners.forEach(listener => testingTown.addTownListener(listener));
+
+      const player1 = new Player(nanoid());
+      const player2 = new Player(nanoid());
+      const player3 = new Player(nanoid());
+      await testingTown.addPlayer(player1);
+      await testingTown.addPlayer(player2);
+      await testingTown.addPlayer(player3);
+      player2.status = 'busy';
+      const msgId = nanoid();
+      const date1 = new Date();
+      const message1: ChatMessage = {
+        author: {displayName:player1.userName, id:player1.id},
+        sid: msgId,
+        body: 'hello',
+        dateCreated: date1,
+        receiver: {displayName:player2.userName, id:player2.id},
+      };
+      testingTown.onChatMessage(message1);
+      expect(mockListeners[0].onChatMessage).toHaveBeenCalledTimes(1);
+      expect(mockListeners[1].onChatMessage).toHaveBeenCalledTimes(0);
+    });
+
   });
 });

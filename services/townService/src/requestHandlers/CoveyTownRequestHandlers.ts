@@ -1,10 +1,10 @@
 import assert from 'assert';
 import { Socket } from 'socket.io';
-import Player from '../types/Player';
-import { ChatMessage, CoveyTownList, UserLocation } from '../CoveyTypes';
-import CoveyTownListener from '../types/CoveyTownListener';
-import CoveyTownsStore from '../lib/CoveyTownsStore';
 import { ConversationAreaCreateRequest, ServerConversationArea } from '../client/TownsServiceClient';
+import { ChatMessage, CoveyTownList, PlayerStatus, UserLocation } from '../CoveyTypes';
+import CoveyTownsStore from '../lib/CoveyTownsStore';
+import CoveyTownListener from '../types/CoveyTownListener';
+import Player from '../types/Player';
 
 /**
  * The format of a request to join a Town in Covey.Town, as dispatched by the server middleware
@@ -170,7 +170,6 @@ export function townUpdateHandler(requestData: TownUpdateRequest): ResponseEnvel
     response: {},
     message: !success ? 'Invalid password or update values specified. Please double check your town update password.' : undefined,
   };
-
 }
 
 /**
@@ -214,6 +213,9 @@ function townSocketAdapter(socket: Socket): CoveyTownListener {
     },
     onPlayerJoined(newPlayer: Player) {
       socket.emit('newPlayer', newPlayer);
+    },
+    onPlayerStatusChanged(statusChangedPlayer: Player) {
+      socket.emit('playerStatusChanged', statusChangedPlayer);
     },
     onTownDestroyed() {
       socket.emit('townClosing');
@@ -271,5 +273,9 @@ export function townSubscriptionHandler(socket: Socket): void {
   // location, inform the CoveyTownController
   socket.on('playerMovement', (movementData: UserLocation) => {
     townController.updatePlayerLocation(s.player, movementData);
+  });
+
+  socket.on('playerStatusChanged', (playerStatus: PlayerStatus) => {
+    townController.updatePlayerStatus(s.player, playerStatus);
   });
 }

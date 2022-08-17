@@ -25,6 +25,12 @@ export default interface CoveyTownListener {
   onPlayerDisconnected(removedPlayer: Player): void;
 
   /**
+   * Called when a player changes status
+   * @param statusChangedPlayer the player that changed status
+   */
+  onPlayerStatusChanged(statusChangedPlayer: Player): void;
+
+  /**
    * Called when a town is destroyed, causing all players to disconnect
    */
   onTownDestroyed(): void;
@@ -46,4 +52,5 @@ export default interface CoveyTownListener {
    * @param message the new chat message
    */
   onChatMessage(message: ChatMessage): void;
+
 }

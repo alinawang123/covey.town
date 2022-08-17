@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 import { Socket } from 'socket.io-client';
+import { UserProfile } from '../CoveyTypes';
 
 /**
  * A basic representation of a text conversation, bridged over a socket.io client
@@ -13,15 +14,18 @@ export default class TextConversation {
 
   private _authorName: string;
 
+  private _authorId: string;
+
   /**
    * Create a new Text Conversation
    *
    * @param socket socket to use to send/receive messages
    * @param authorName name of message author to use as sender
    */
-  public constructor(socket: Socket, authorName: string) {
+  public constructor(socket: Socket, authorName: string, authorId:string) {
     this._socket = socket;
     this._authorName = authorName;
+    this._authorId=authorId;
     this._socket.on('chatMessage', (message: ChatMessage) => {
       message.dateCreated = new Date(message.dateCreated);
       this.onChatMessage(message);
@@ -29,20 +33,32 @@ export default class TextConversation {
   }
 
   private onChatMessage(message: ChatMessage) {
-    this._callbacks.forEach(cb => cb(message));
+    if(message.receiver){
+      if(this._authorId===message.receiver.id||this._authorId===message.author.id){
+        this._callbacks.forEach(cb => cb(message));
+      }
+    }else{
+      this._callbacks.forEach(cb => cb(message));
+    }
+    // this._callbacks.forEach(cb => cb(message));
+    // when user id is specified
+    // edit here
   }
 
   /**
    * Send a text message to this channel
    * @param message
    */
-  public sendMessage(message: string) {
+  public sendMessage(message: string,receiver?:UserProfile) {
     const msg: ChatMessage = {
       sid: nanoid(),
       body: message,
-      author: this._authorName,
-      dateCreated: new Date(),
+      author: {displayName:this._authorName,id:this._authorId},
+      dateCreated: new Date()
     };
+    if(receiver){
+      msg.receiver=receiver
+    }
     this._socket.emit('chatMessage', msg);
   }
 
@@ -72,8 +88,10 @@ export default class TextConversation {
 }
 type MessageCallback = (message: ChatMessage) => void;
 export type ChatMessage = {
-  author: string;
+  author: UserProfile;
   sid: string;
   body: string;
   dateCreated: Date;
+  receiver?:UserProfile;
+  errorMsg?:string
 };

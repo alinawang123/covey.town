@@ -1,11 +1,15 @@
-import { FormControl, InputLabel, makeStyles, MenuItem, Select } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core';
 import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 import clsx from 'clsx';
 import { default as React, useEffect, useRef, useState } from 'react';
 import TextConversation from '../../../../../../classes/TextConversation';
+import { UserProfile } from '../../../../../../CoveyTypes';
 import useMaybeVideo from '../../../../../../hooks/useMaybeVideo';
+import usePlayersInTown from '../../../../../../hooks/usePlayersInTown';
+import useVideoContext from '../../../hooks/useVideoContext/useVideoContext';
 import { isMobile } from '../../../utils';
 import Snackbar from '../../Snackbar/Snackbar';
+import UserSelect from './UserSelect/UserSelect';
 // import Select, { SelectChangeEvent } from '@material-ui/core/Select';
 
 const useStyles = makeStyles(theme => ({
@@ -77,11 +81,19 @@ export default function ChatInput({ conversation, isChatWindowOpen }: ChatInputP
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isTextareaFocused, setIsTextareaFocused] = useState(false);
   const video = useMaybeVideo()
-  const [age, setAge] = React.useState('');
+  const [selectedUser, setUser] = React.useState<string>('everyone');
+  const { room } = useVideoContext();
+  const localParticipant = room!.localParticipant;
+  
   const handleChange1 = (event: React.ChangeEvent<{ value: unknown }>) => {
-    console.log("12")
-    setAge(event.target.value as string);
+    setUser(event.target.value as string);
   };
+  const players:UserProfile[]=usePlayersInTown().map((item)=>{
+    return {displayName:item.userName,id:item.id}
+  })
+  useEffect(()=>{
+    console.log(players)
+  },[])
   useEffect(() => {
     if(isTextareaFocused){
       video?.pauseGame();
@@ -111,7 +123,18 @@ export default function ChatInput({ conversation, isChatWindowOpen }: ChatInputP
 
   const handleSendMessage = (message: string) => {
     if (isValidMessage) {
-      conversation.sendMessage(message.trim());
+      if(selectedUser!='everyone'){
+        let user:UserProfile|undefined
+        for(let i=0;i<players.length;i++){
+          if(selectedUser===players[i].id){
+            user={displayName:players[i].displayName,id:selectedUser}
+            break;
+          }
+        }
+        conversation.sendMessage(message.trim(),user);
+      }else{
+        conversation.sendMessage(message.trim());
+      }
       setMessageBody('');
     }
   };
@@ -126,20 +149,24 @@ export default function ChatInput({ conversation, isChatWindowOpen }: ChatInputP
         handleClose={() => setFileSendError(null)}
       />
       <div>
-      <FormControl fullWidth>
-  <InputLabel id="demo-simple-select-label">To:</InputLabel>
-  <Select
-    labelId="demo-simple-select-label"
-    id="demo-simple-select"
-    value={age}
-    label="Age"
-    onChange={handleChange1}
-  >
-    <MenuItem value={10}>Ten</MenuItem>
-    <MenuItem value={20}>Twenty</MenuItem>
-    <MenuItem value={30}>Thirty</MenuItem>
-  </Select>
-</FormControl>
+      {/* <FormControl fullWidth>
+        <InputLabel id="demo-simple-select-label">To:</InputLabel>
+        <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          value={selectedUser}
+          label="Age"
+          onChange={handleChange1}
+        >
+          <MenuItem value="everyone" >everyone</MenuItem>
+          {players.filter(player=>{
+            return player.id!=localParticipant.identity
+          }).map((player)=>{
+            return <MenuItem value={player.id} key={player.id}>{player.displayName}</MenuItem>
+          })}
+        </Select>
+      </FormControl> */}
+      <UserSelect selectedUser={selectedUser} handleChange={handleChange1}/>
       </div>
       <div className={clsx(classes.textAreaContainer, { [classes.isTextareaFocused]: isTextareaFocused })}>
         {/* 
