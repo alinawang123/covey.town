@@ -44,8 +44,11 @@ To create an account and configure your local environment:
 Provided below is one of our team members' TWILIO ACCOUNT SETUP. Feel free to use the below to save some time if needed. 
 
 TWILIO_ACCOUNT_SID=ACa9475c7d12edc6c8b3ba21f34e4b4a27
+
 TWILIO_API_KEY_SID=SK8baa732fd1b0be52a6d7e7eb7b016c05
+
 TWILIO_API_KEY_SECRET=RrWhzQhvQHK8F2Pw3NsgMamQMVTZCARE
+
 TWILIO_API_AUTH_TOKEN=a0321638e963db8242e57e6642ca565b
 
 ### Starting the backend
