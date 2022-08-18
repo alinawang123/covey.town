@@ -16,6 +16,15 @@ A backend service (in the `services/townService` directory) implements the appli
 
 Running the application locally entails running both the backend service and a frontend.
 
+### Configuring the frontend
+
+Create a `.env` file in the `frontend` directory, with the line: `REACT_APP_TOWNS_SERVICE_URL=http://localhost:808` (if you deploy the towns service to another location, put that location here instead)
+
+### Running the frontend
+
+In the `frontend` directory, run `npm start` (again, you'll need to run `npm install` the very first time). After several moments (or minutes, depending on the speed of your machine), a browser will open with the frontend running locally.
+The frontend will automatically re-compile and reload in your browser if you change any files in the `frontend/src` directory.
+
 ### Setting up the backend
 
 To run the backend, you will need a Twilio account. Twilio provides new accounts with $15 of credit, which is more than enough to get started.
@@ -32,16 +41,15 @@ To create an account and configure your local environment:
 | `TWILIO_API_KEY_SECRET` | The secret for the API key you created.   |
 | `TWILIO_API_AUTH_TOKEN` | Visible on your twilio account dashboard. |
 
+Provided below is one of our team members' TWILIO ACCOUNT SETUP. Feel free to use the below to save some time if needed. 
+
+TWILIO_ACCOUNT_SID=ACa9475c7d12edc6c8b3ba21f34e4b4a27
+TWILIO_API_KEY_SID=SK8baa732fd1b0be52a6d7e7eb7b016c05
+TWILIO_API_KEY_SECRET=RrWhzQhvQHK8F2Pw3NsgMamQMVTZCARE
+TWILIO_API_AUTH_TOKEN=a0321638e963db8242e57e6642ca565b
+
 ### Starting the backend
 
 Once your backend is configured, you can start it by running `npm start` in the `services/townService` directory (the first time you run it, you will also need to run `npm install`).
 The backend will automatically restart if you change any of the files in the `services/townService/src` directory.
 
-### Configuring the frontend
-
-Create a `.env` file in the `frontend` directory, with the line: `REACT_APP_TOWNS_SERVICE_URL=http://localhost:8081` (if you deploy the towns service to another location, put that location here instead)
-
-### Running the frontend
-
-In the `frontend` directory, run `npm start` (again, you'll need to run `npm install` the very first time). After several moments (or minutes, depending on the speed of your machine), a browser will open with the frontend running locally.
-The frontend will automatically re-compile and reload in your browser if you change any files in the `frontend/src` directory.
