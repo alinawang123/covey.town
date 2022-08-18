@@ -18,7 +18,7 @@ Running the application locally entails running both the backend service and a f
 
 ### Configuring the frontend
 
-Create a `.env` file in the `frontend` directory, with the line: `REACT_APP_TOWNS_SERVICE_URL=http://localhost:808` (if you deploy the towns service to another location, put that location here instead)
+Create a `.env` file in the `frontend` directory, with the line: `REACT_APP_TOWNS_SERVICE_URL=http://localhost:8080` (if you deploy the towns service to another location, put that location here instead)
 
 ### Running the frontend
 
