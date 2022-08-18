@@ -40,8 +40,7 @@ To create an account and configure your local environment:
 | `TWILIO_API_KEY_SID`    | The SID of the new API key you created.   |
 | `TWILIO_API_KEY_SECRET` | The secret for the API key you created.   |
 | `TWILIO_API_AUTH_TOKEN` | Visible on your twilio account dashboard. |
-
-Provided below is one of our team members' TWILIO ACCOUNT SETUP. Feel free to use the below to save some time if needed. 
+ 
 
 
 ### Starting the backend
